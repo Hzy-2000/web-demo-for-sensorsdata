@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommended Content Display - Official Website</title>
+    <script src="https://static.sensorsdata.cn/sdk/1.26.6/sensorsdata.min.js"></script>
+    <script>
+        // 初始化 Sensors SDK
+        var sensors = window['sensorsDataAnalytic201505'];
+        sensors.init({
+            server_url: 'https://demosink-global.sensorsdata.com/sa?project=Simulator',
+            use_client_time: true,
+            send_type: 'beacon',
+            show_log: true
+        });
+
+        // 调用代理服务器的 API
+        async function fetchBannerContent() {
+            const banner = document.getElementById('dynamic_banner');
+            const distinctId = localStorage.getItem('distinct_id');
+
+            // 验证 distinctId 是否存在
+            if (!distinctId) {
+                banner.innerHTML = `<img src="https://via.placeholder.com/1200x400" alt="Not logged in, please log in">`;
+                return;
+            }
+
+            // 使用 distinctId 登录
+            sensors.login(distinctId);
+
+            try {
+                const response = await fetch("http://47.119.124.167:3001/api/proxy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        log_id: distinctId,
+                        section_id: "section_id_5378012127242",
+                        distinct_id: distinctId,
+                        need_sticky_item: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.data && data.data.items && data.data.items.length > 0) {
+                    const item = data.data.items[0];
+                    banner.innerHTML = `
+                        <img src="${item.material_properties.pic}" alt="Recommended Content Image" onclick="trackBannerClick('${item.strategy_name}')">
+                    `;
+                } else {
+                    banner.innerHTML = `<img src="https://via.placeholder.com/1200x400" alt="No recommended content">`;
+                }
+            } catch (error) {
+                banner.innerHTML = `<img src="https://via.placeholder.com/1200x400" alt="Failed to load">`;
+                console.error("Failed to load:", error);
+            }
+        }
+
+        // 上报事件到神策
+        function trackBannerClick(strategyName) {
+            const distinctId = localStorage.getItem('distinct_id');
+            if (!distinctId) {
+                alert("User information not found, unable to report the event!");
+                return;
+            }
+
+            // 上报事件
+            sensors.track("ClickBanner", {
+                user_id: distinctId,
+                banner_type: strategyName
+            });
+        }
+
+        // 页面加载时执行
+        window.onload = fetchBannerContent;
+    </script>
+    <style>
+        body {
+            font-family: 'Arial', Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            background-color: #b71c1c;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .navbar nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+        }
+
+        .navbar nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* 动态 Banner 样式 */
+        .dynamic-banner {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+            background-color: #fff;
+        }
+
+        .dynamic-banner img {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        /* 服务卡片 */
+        .service-card-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            display: flex;
+            gap: 20px;
+        }
+
+        .service-card {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .service-card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #b71c1c;
+        }
+
+        .service-card p {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .service-card a {
+            background-color: #b71c1c;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .service-card a:hover {
+            background-color: #a01515;
+        }
+
+        /* 页脚样式 */
+        .footer {
+            background-color: #b71c1c;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="navbar">
+        <h1>Website Name</h1>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#">Services</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact Us</a>
+        </nav>
+    </div>
+
+    <!-- 动态 Banner -->
+    <div id="dynamic_banner" class="dynamic-banner">
+        <img src="https://via.placeholder.com/1200x400" alt="Loading...">
+    </div>
+
+    <!-- 服务卡片 -->
+    <div class="service-card-container">
+        <div class="service-card">
+            <h3>Service One</h3>
+            <p>Introducing our core services, providing more value to clients.</p>
+            <a href="#">View Details</a>
+        </div>
+        <div class="service-card">
+            <h3>Service Two</h3>
+            <p>Premium solutions to meet diverse client needs.</p>
+            <a href="#">Learn More</a>
+        </div>
+        <div class="service-card">
+            <h3>Service Three</h3>
+            <p>Fast and professional support to help clients succeed.</p>
+            <a href="#">Contact Now</a>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div class="footer">
+        &copy; 2024 Website Name | All Rights Reserved
+    </div>
+</body>
+</html>

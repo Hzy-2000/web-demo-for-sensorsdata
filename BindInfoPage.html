@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bind Information</title>
+    <script src="https://static.sensorsdata.cn/sdk/1.26.6/sensorsdata.min.js"></script>
+    <script>
+        var sensors = window['sensorsDataAnalytic201505'];
+        sensors.init({
+            server_url: 'https://demosink-global.sensorsdata.com/sa?project=Simulator',
+            use_client_time: true,
+            send_type: 'beacon',
+            show_log: true
+        });
+
+        // 页面加载时设置 distinct_id
+        window.onload = function () {
+            const userId = localStorage.getItem('user_id');
+            if (userId) {
+                sensors.login(userId); // 设置 login_id
+                localStorage.setItem('distinct_id', userId); // 同时存储 distinct_id
+            } else {
+                alert("User ID not found. Please go back and log in again.");
+                window.location.href = "RegisterLogin.html"; // 跳转回登录页面
+            }
+        };
+
+        async function submitBindingData() {
+            const email = document.getElementById('email').value;
+            const phoneNum = document.getElementById('phone-num').value;
+            const whatsappId = document.getElementById('whatsapp-id').value;
+            const lineId = document.getElementById('line-id').value;
+
+            if (!email || !phoneNum || !whatsappId || !lineId) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            try {
+                // 设置用户属性到 Sensors Data
+                sensors.setProfile({
+                    email: email,
+                    phone_num: phoneNum,
+                    whatsapp_id: whatsappId,
+                    line_id: lineId
+                });
+
+                // 存储用户绑定的信息到 localStorage
+                const distinctId = localStorage.getItem('distinct_id');
+                if (distinctId) {
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('phone_num', phoneNum);
+                    localStorage.setItem('whatsapp_id', whatsappId);
+                    localStorage.setItem('line_id', lineId);
+
+                    alert("Information binding successful!");
+                    // 跳转到下一页面，并将 distinct_id 传递给下一页面
+                    window.location.href = `index.html?distinct_id=${distinctId}`;
+                } else {
+                    alert("distinct_id not found. Please log in again.");
+                }
+            } catch (error) {
+                console.error("Submission error:", error);
+                alert("An error occurred during submission. Please try again later.");
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Bind Information</h2>
+        <div class="input-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Please enter your Email">
+        </div>
+        <div class="input-group">
+            <label for="phone-num">Phone:</label>
+            <input type="text" id="phone-num" placeholder="Please enter your phone">
+        </div>
+        <div class="input-group">
+            <label for="whatsapp-id">Whatsapp ID：</label>
+            <input type="text" id="whatsapp-id" placeholder="Please enter your Whatsapp ID">
+        </div>
+        <div class="input-group">
+            <label for="line-id">Line ID：</label>
+            <input type="text" id="line-id" placeholder="Please enter your Line ID">
+        </div>
+        <button onclick="submitBindingData()">Submit</button>
+    </div>
+</body>
+</html>
